@@ -1,0 +1,19 @@
+name: bennetsen-mines
+version: '${project.version}'
+main: dk.ggsmp.mines.BennetsenMines
+api-version: '1.21'
+description: Modern async mine management plugin for Paper servers
+author: Bennetsen
+
+dependencies:
+  server:
+    FastAsyncWorldEdit:
+      load: BEFORE
+      required: false
+    WorldEdit:
+      load: BEFORE
+      required: false
+    FancyHolograms:
+      load: BEFORE
+      required: false
+

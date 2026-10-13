@@ -1,0 +1,32 @@
+# ========================================== #
+#      bennetsen-mines Storage File          #
+# ========================================== #
+# This file stores configured mines, their cuboid coordinates,
+# composition block percentages, reset timers, and hologram positions.
+
+mines:
+  example_mine:
+    display-name: "&a&lG&G Mines"
+    world: "world"
+    region:
+      min:
+        x: 100
+        y: 60
+        z: 100
+      max:
+        x: 120
+        y: 75
+        z: 120
+    reset-interval: 600
+    composition:
+      STONE: 80.0
+      COAL_ORE: 15.0
+      DIAMOND_ORE: 5.0
+    hologram:
+      world: "world"
+      x: 110.5
+      y: 77.0
+      z: 110.5
+      yaw: 0.0
+      pitch: 0.0
+
