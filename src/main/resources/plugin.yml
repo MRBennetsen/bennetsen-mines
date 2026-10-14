@@ -8,6 +8,7 @@ softdepend:
   - FastAsyncWorldEdit
   - WorldEdit
   - FancyHolograms
+  - WorldGuard
 
 commands:
   bm:

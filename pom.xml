@@ -78,6 +78,14 @@
             <version>${fancyholograms.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- WorldGuard API -->
+        <dependency>
+            <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-bukkit</artifactId>
+            <version>7.0.19</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -3,6 +3,7 @@ package dk.ggsmp.mines;
 import dk.ggsmp.mines.command.MineCommand;
 import dk.ggsmp.mines.hook.HologramHook;
 import dk.ggsmp.mines.hook.WorldEditHook;
+import dk.ggsmp.mines.hook.WorldGuardHook;
 import dk.ggsmp.mines.mine.MineManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -20,6 +21,7 @@ public class BennetsenMines extends JavaPlugin {
     private MineManager mineManager;
     private WorldEditHook worldEditHook;
     private HologramHook hologramHook;
+    private WorldGuardHook worldGuardHook;
 
     private BukkitTask timerTask;
     private Object foliaTask; // Kept as Object for compatibility with standard Paper & Folia
@@ -38,15 +40,26 @@ public class BennetsenMines extends JavaPlugin {
         // Initialize hooks
         this.worldEditHook = new WorldEditHook(this);
         this.hologramHook = new HologramHook(this);
+        this.worldGuardHook = new WorldGuardHook(this);
 
         // Initialize mine storage and manager
         this.mineManager = new MineManager(this);
+
+        // Register GUI listener for status menu
+        getServer().getPluginManager().registerEvents(new dk.ggsmp.mines.gui.MineStatusGUI(this), this);
 
         // Register commands (Modern Paper registerCommand with legacy Bukkit fallback)
         MineCommand cmd = new MineCommand(this);
         try {
             registerCommand("bm", "BennetsenMines management command", java.util.List.of("bennetsenmines", "bmines", "mrl"), cmd);
-            getLogger().info("Registered command 'bm' via Paper command registry.");
+            registerCommand("mines", "View prison mine status overview", java.util.List.of("minestatus"), (stack, args) -> {
+                if (stack.getSender() instanceof org.bukkit.entity.Player player) {
+                    dk.ggsmp.mines.gui.MineStatusGUI.open(player, this);
+                } else {
+                    stack.getSender().sendPlainMessage("This command is for in-game players only.");
+                }
+            });
+            getLogger().info("Registered commands 'bm' and 'mines' via Paper command registry.");
         } catch (NoSuchMethodError | UnsupportedOperationException e) {
             try {
                 PluginCommand command = getCommand("bm");
@@ -139,6 +152,10 @@ public class BennetsenMines extends JavaPlugin {
 
     public HologramHook getHologramHook() {
         return hologramHook;
+    }
+
+    public WorldGuardHook getWorldGuardHook() {
+        return worldGuardHook;
     }
 }
 

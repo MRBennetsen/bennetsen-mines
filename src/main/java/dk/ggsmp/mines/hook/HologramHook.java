@@ -59,10 +59,8 @@ public class HologramHook {
             HologramManager manager = FancyHologramsPlugin.get().getHologramManager();
             String holoName = mine.getHologramName();
 
-            // Prepare the 2 lines of text
-            String line1 = ChatUtil.color(mine.getDisplayName());
-            String line2 = ChatUtil.color("&7Resets in: &f" + mine.getFormattedTime());
-            List<String> lines = List.of(line1, line2);
+            // Prepare the customizable lines of text with substituted placeholders
+            List<String> lines = mine.getRenderedHologramLines();
 
             Optional<Hologram> optionalHolo = manager.getHologram(holoName);
 

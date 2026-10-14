@@ -3,6 +3,7 @@ package dk.ggsmp.mines.command;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import dk.ggsmp.mines.BennetsenMines;
+import dk.ggsmp.mines.gui.MineStatusGUI;
 import dk.ggsmp.mines.mine.Mine;
 import dk.ggsmp.mines.util.ChatUtil;
 import io.papermc.paper.command.brigadier.BasicCommand;
@@ -31,8 +32,9 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
 
     private static final List<String> SUBCOMMANDS = List.of(
             "create", "redefine", "addblock", "removeblock",
-            "setholo", "removeholo", "reset", "setinterval",
-            "setname", "list", "info", "delete", "reload", "help"
+            "setholo", "removeholo", "sethololine", "addhololine", "resethololines",
+            "setspawn", "removespawn", "setwg", "removewg",
+            "reset", "setinterval", "setname", "gui", "list", "info", "delete", "reload", "help"
     );
 
     public MineCommand(BennetsenMines plugin) {
@@ -81,9 +83,17 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
             case "removeblock" -> handleRemoveBlock(sender, args);
             case "setholo" -> handleSetHolo(sender, args);
             case "removeholo" -> handleRemoveHolo(sender, args);
+            case "sethololine" -> handleSetHoloLine(sender, args);
+            case "addhololine" -> handleAddHoloLine(sender, args);
+            case "resethololines" -> handleResetHoloLines(sender, args);
+            case "setspawn" -> handleSetSpawn(sender, args);
+            case "removespawn" -> handleRemoveSpawn(sender, args);
+            case "setwg" -> handleSetWG(sender, args);
+            case "removewg" -> handleRemoveWG(sender, args);
             case "reset" -> handleReset(sender, args);
             case "setinterval" -> handleSetInterval(sender, args);
             case "setname" -> handleSetName(sender, args);
+            case "gui", "status" -> handleGui(sender);
             case "list" -> handleList(sender);
             case "info" -> handleInfo(sender, args);
             case "delete" -> handleDelete(sender, args);
@@ -271,7 +281,6 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
         mine.updateHologram(plugin);
 
         ChatUtil.sendMessage(sender, "&aHologram for mine '&e" + name + "&a' set to your current location!");
-        ChatUtil.sendMessage(sender, "&7Displaying 2-line countdown with FancyHolograms.");
     }
 
     private void handleRemoveHolo(CommandSender sender, String[] args) {
@@ -292,6 +301,185 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
         plugin.getMineManager().saveMines();
 
         ChatUtil.sendMessage(sender, "&aRemoved hologram for mine '&e" + name + "&a'.");
+    }
+
+    private void handleSetHoloLine(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm sethololine <name> <lineNumber> <text...>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        int lineNum;
+        try {
+            lineNum = Integer.parseInt(args[2]);
+            if (lineNum < 1) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ChatUtil.sendMessage(sender, "&cLine number must be an integer >= 1.");
+            return;
+        }
+
+        String text = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+        List<String> lines = new ArrayList<>(mine.getHologramLines().isEmpty()
+                ? List.of("%name%", "&7Resets in: &f%time%")
+                : mine.getHologramLines());
+
+        int index = lineNum - 1;
+        while (lines.size() <= index) {
+            lines.add("");
+        }
+        lines.set(index, text);
+
+        mine.setHologramLines(lines);
+        plugin.getMineManager().saveMines();
+        mine.updateHologram(plugin);
+
+        ChatUtil.sendMessage(sender, "&aSet hologram line &e#" + lineNum + " &afor mine '&e" + name + "&a' to: &r" + ChatUtil.color(text));
+    }
+
+    private void handleAddHoloLine(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm addhololine <name> <text...>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        String text = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+        List<String> lines = new ArrayList<>(mine.getHologramLines().isEmpty()
+                ? List.of("%name%", "&7Resets in: &f%time%")
+                : mine.getHologramLines());
+
+        lines.add(text);
+        mine.setHologramLines(lines);
+        plugin.getMineManager().saveMines();
+        mine.updateHologram(plugin);
+
+        ChatUtil.sendMessage(sender, "&aAdded line to hologram of mine '&e" + name + "&a': &r" + ChatUtil.color(text));
+    }
+
+    private void handleResetHoloLines(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm resethololines <name>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        mine.setHologramLines(Collections.emptyList());
+        plugin.getMineManager().saveMines();
+        mine.updateHologram(plugin);
+
+        ChatUtil.sendMessage(sender, "&aReset hologram lines for mine '&e" + name + "&a' to default 2-line template.");
+    }
+
+    private void handleSetSpawn(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            ChatUtil.sendMessage(sender, "&cOnly in-game players can set evacuation spawn points.");
+            return;
+        }
+
+        if (args.length < 2) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm setspawn <name>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        mine.setSpawnLocation(player.getLocation());
+        plugin.getMineManager().saveMines();
+
+        ChatUtil.sendMessage(sender, "&aSafe evacuation point for mine '&e" + name + "&a' set to your current position.");
+        ChatUtil.sendMessage(sender, "&7Players inside the mine cuboid will be safely evacuated here upon reset.");
+    }
+
+    private void handleRemoveSpawn(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm removespawn <name>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        mine.setSpawnLocation(null);
+        plugin.getMineManager().saveMines();
+
+        ChatUtil.sendMessage(sender, "&aRemoved custom evacuation point for mine '&e" + name + "&a'.");
+        ChatUtil.sendMessage(sender, "&7Evacuation will now use WorldGuard teleport flag or the safe surface above the mine.");
+    }
+
+    private void handleSetWG(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm setwg <name> <regionName>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        String wgRegion = args[2];
+        mine.setWorldGuardRegion(wgRegion);
+        plugin.getMineManager().saveMines();
+
+        ChatUtil.sendMessage(sender, "&aLinked WorldGuard region '&e" + wgRegion + "&a' to mine '&e" + name + "&a'.");
+        ChatUtil.sendMessage(sender, "&7Warning alerts (60s, 30s, 10s, 5s-1s) and reset messages will only be sent to players inside this region.");
+    }
+
+    private void handleRemoveWG(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            ChatUtil.sendMessage(sender, "&cUsage: /bm removewg <name>");
+            return;
+        }
+
+        String name = args[1].toLowerCase();
+        Mine mine = plugin.getMineManager().getMine(name);
+        if (mine == null) {
+            ChatUtil.sendMessage(sender, "&cMine '&e" + name + "&c' does not exist.");
+            return;
+        }
+
+        mine.setWorldGuardRegion(null);
+        plugin.getMineManager().saveMines();
+
+        ChatUtil.sendMessage(sender, "&aUnlinked WorldGuard region from mine '&e" + name + "&a'. Notifications will now target mine proximity.");
+    }
+
+    private void handleGui(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            ChatUtil.sendMessage(sender, "&cOnly in-game players can open the mine status GUI.");
+            return;
+        }
+        MineStatusGUI.open(player, plugin);
     }
 
     private void handleReset(CommandSender sender, String[] args) {
@@ -374,8 +562,9 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
         ChatUtil.sendMessage(sender, "&6=== Active Mines (" + mines.size() + ") ===");
         for (Mine mine : mines) {
             String holoStatus = mine.hasHologram() ? "&a[Holo]" : "&7[No Holo]";
+            String spawnStatus = mine.hasSpawnLocation() ? "&a[Spawn]" : "&7[No Spawn]";
             ChatUtil.sendMessage(sender, "&8- &e" + mine.getId() + " &7(&r" + ChatUtil.color(mine.getDisplayName()) + "&7) "
-                    + holoStatus + " &8| &7Next reset: &f" + mine.getFormattedTime()
+                    + holoStatus + " " + spawnStatus + " &8| &7Next reset: &f" + mine.getFormattedTime()
                     + " &8| &7Blocks: &f" + mine.getComposition().size());
         }
     }
@@ -401,6 +590,8 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
                 + " &8(&e" + mine.getVolume() + " blocks&8)");
         ChatUtil.sendMessage(sender, "&7Reset Interval: &f" + mine.getResetInterval() + "s &8| &7Next Reset in: &f" + mine.getFormattedTime());
         ChatUtil.sendMessage(sender, "&7Hologram: " + (mine.hasHologram() ? "&aActive" : "&cNot configured"));
+        ChatUtil.sendMessage(sender, "&7Evacuation Spawn: " + (mine.hasSpawnLocation() ? "&aConfigured" : "&eAuto-surface/WorldGuard"));
+        ChatUtil.sendMessage(sender, "&7WorldGuard Region: " + (mine.getWorldGuardRegion() != null ? "&e" + mine.getWorldGuardRegion() : "&8Auto/Proximity"));
 
         ChatUtil.sendMessage(sender, "&7Composition (" + String.format("%.1f", mine.getTotalPercentage()) + "%):");
         if (mine.getComposition().isEmpty()) {
@@ -437,11 +628,19 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
         sender.sendMessage(ChatUtil.color("&e/" + label + " redefine <name> &7- Redefine mine bounds from WorldEdit selection"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " addblock <name> <material> <%> &7- Add/update block percentage"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " removeblock <name> <material> &7- Remove block from composition"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " setspawn <name> &7- Set evacuation spawn point (anti-suffocation)"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " removespawn <name> &7- Remove custom evacuation point"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " setwg <name> <region> &7- Link WorldGuard region for localized alerts"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " removewg <name> &7- Unlink WorldGuard region"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " setholo <name> &7- Set hologram spawn position at your location"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " removeholo <name> &7- Remove hologram position"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " sethololine <name> <line#> <text> &7- Customize a specific hologram line"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " addhololine <name> <text> &7- Add a new line to hologram"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " resethololines <name> &7- Reset hologram to default lines"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " reset <name> &7- Force an immediate asynchronous reset"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " setinterval <name> <seconds> &7- Set reset interval in seconds"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " setname <name> <displayName> &7- Change mine visual display name"));
+        sender.sendMessage(ChatUtil.color("&e/" + label + " gui &7- Open the status overview GUI (no teleport)"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " list &7- List all configured mines"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " info <name> &7- Show detailed mine configuration"));
         sender.sendMessage(ChatUtil.color("&e/" + label + " delete <name> &7- Delete a mine"));
@@ -460,7 +659,9 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
 
         if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
-            if (List.of("redefine", "addblock", "removeblock", "setholo", "removeholo", "reset", "setinterval", "setname", "info", "delete").contains(sub)) {
+            if (List.of("redefine", "addblock", "removeblock", "setholo", "removeholo", "sethololine",
+                    "addhololine", "resethololines", "setspawn", "removespawn", "setwg", "removewg",
+                    "reset", "setinterval", "setname", "info", "delete").contains(sub)) {
                 List<String> mineIds = new ArrayList<>();
                 for (Mine m : plugin.getMineManager().getMines()) {
                     mineIds.add(m.getId());
@@ -489,6 +690,8 @@ public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter 
                     }
                     return filterPrefix(mats, args[2]);
                 }
+            } else if (sub.equals("sethololine")) {
+                return List.of("1", "2", "3", "4");
             }
         }
 
