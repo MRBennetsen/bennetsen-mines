@@ -42,14 +42,21 @@ public class BennetsenMines extends JavaPlugin {
         // Initialize mine storage and manager
         this.mineManager = new MineManager(this);
 
-        // Register commands
-        PluginCommand command = getCommand("bm");
-        if (command != null) {
-            MineCommand cmd = new MineCommand(this);
-            command.setExecutor(cmd);
-            command.setTabCompleter(cmd);
-        } else {
-            getLogger().severe("Command 'bm' could not be found in plugin.yml!");
+        // Register commands (Modern Paper registerCommand with legacy Bukkit fallback)
+        MineCommand cmd = new MineCommand(this);
+        try {
+            registerCommand("bm", "BennetsenMines management command", java.util.List.of("bennetsenmines", "bmines", "mrl"), cmd);
+            getLogger().info("Registered command 'bm' via Paper command registry.");
+        } catch (NoSuchMethodError | UnsupportedOperationException e) {
+            try {
+                PluginCommand command = getCommand("bm");
+                if (command != null) {
+                    command.setExecutor(cmd);
+                    command.setTabCompleter(cmd);
+                    getLogger().info("Registered command 'bm' via Bukkit PluginCommand.");
+                }
+            } catch (Throwable ignored) {
+            }
         }
 
         // Start repeating 1-second countdown and update task

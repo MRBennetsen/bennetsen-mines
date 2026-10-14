@@ -5,6 +5,8 @@ import com.sk89q.worldedit.regions.Region;
 import dk.ggsmp.mines.BennetsenMines;
 import dk.ggsmp.mines.mine.Mine;
 import dk.ggsmp.mines.util.ChatUtil;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,15 +16,16 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * Command executor and tab completer for the /bm command.
+ * Command handler for the /bm command supporting both modern Paper BasicCommand and Bukkit CommandExecutor.
  */
-public class MineCommand implements CommandExecutor, TabCompleter {
+public class MineCommand implements BasicCommand, CommandExecutor, TabCompleter {
 
     private final BennetsenMines plugin;
 
@@ -34,6 +37,27 @@ public class MineCommand implements CommandExecutor, TabCompleter {
 
     public MineCommand(BennetsenMines plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public void execute(CommandSourceStack stack, String[] args) {
+        onCommand(stack.getSender(), null, "bm", args);
+    }
+
+    @Override
+    public Collection<String> suggest(CommandSourceStack stack, String[] args) {
+        List<String> list = onTabComplete(stack.getSender(), null, "bm", args);
+        return list != null ? list : Collections.emptyList();
+    }
+
+    @Override
+    public boolean canUse(CommandSender sender) {
+        return sender.hasPermission("bennetsenmines.admin");
+    }
+
+    @Override
+    public String permission() {
+        return "bennetsenmines.admin";
     }
 
     @Override
