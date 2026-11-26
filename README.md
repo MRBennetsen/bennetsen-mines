@@ -21,6 +21,22 @@ A high-performance, asynchronous mine management plugin for modern **Paper (1.26
 
 ---
 
+## Screenshots
+
+### Status-Only GUI (`/mines`)
+![Mine Status Overview GUI](assets/screenshot-gui.png)
+
+### Live FancyHolograms Countdown
+![FancyHolograms Countdown](assets/screenshot-hologram.jpg)
+
+### Localized Countdown Alerts (Title & ActionBar)
+![Localized Countdown Alerts](assets/screenshot-countdown.jpg)
+
+### Post-Reset Safe Evacuation
+![Freshly Reset Mine](assets/screenshot-reset.jpg)
+
+---
+
 ## Quick Start Guide
 
 1. **Select Region**: Hold the WorldEdit wand (`//wand`) and select Point 1 (left-click) and Point 2 (right-click) of the mine cuboid.
