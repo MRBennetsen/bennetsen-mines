@@ -6,7 +6,7 @@
 
 mines:
   example_mine:
-    display-name: "&a&lG&G Mines"
+    display-name: "&a&lBennetsen Mines"
     world: "world"
     region:
       min:

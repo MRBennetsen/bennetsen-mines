@@ -1,6 +1,6 @@
 # bennetsen-mines
 
-![Build Status](https://github.com/bennetsen/bennetsen-mines/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/MRBennetsen/bennetsen-mines/actions/workflows/build.yml/badge.svg)
 ![Java Version](https://img.shields.io/badge/Java-25-orange.svg)
 ![Paper Version](https://img.shields.io/badge/Paper-1.26.x-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -26,7 +26,7 @@ A high-performance, asynchronous mine management plugin for modern **Paper (1.26
 1. **Select Region**: Hold the WorldEdit wand (`//wand`) and select Point 1 (left-click) and Point 2 (right-click) of the mine cuboid.
 2. **Create the Mine**:
    ```
-   /bm create quarry &a&lG&G Quarry
+   /bm create quarry &a&lBennetsen Quarry
    ```
 3. **Configure Block Percentages**:
    ```
@@ -92,7 +92,7 @@ When customizing hologram lines with `/bm sethololine` or in `mines.yml`, the fo
 
 | Placeholder | Replaced With | Example |
 | :--- | :--- | :--- |
-| `%name%` | Custom formatted display name | `&a&lG&G Quarry` |
+| `%name%` | Custom formatted display name | `&a&lBennetsen Quarry` |
 | `%id%` | Mine unique identifier | `quarry` |
 | `%time%` | Formatted countdown | `09:45` or `01:15:00` |
 | `%seconds%` | Total seconds remaining until reset | `585` |
@@ -129,7 +129,7 @@ The plugin stores all mine definitions and metadata in `plugins/bennetsen-mines/
 ```yaml
 mines:
   quarry:
-    display-name: "&a&lG&G Mines"
+    display-name: "&a&lBennetsen Mines"
     world: "world"
     region:
       min:
@@ -183,9 +183,15 @@ mines:
 To compile the plugin from source:
 
 ```bash
-git clone https://github.com/bennetsen/bennetsen-mines.git
+git clone https://github.com/MRBennetsen/bennetsen-mines.git
 cd bennetsen-mines
 mvn clean package
 ```
 
-The output JAR file will be generated in `target/bennetsen-mines-1.0.0-SNAPSHOT.jar`.
+The output JAR file will be generated in `target/bennetsen-mines-1.0.4.jar`.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

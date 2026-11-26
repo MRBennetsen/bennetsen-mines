@@ -40,7 +40,7 @@ public class HologramHook {
 
     /**
      * Updates or creates the two-line countdown hologram for the given mine.
-     * Line 1: Mine's custom name (e.g., '&a&lG&G Mines')
+     * Line 1: Mine's custom name (e.g., '&a&lBennetsen Mines')
      * Line 2: Live countdown (e.g., '&7Resets in: &f%time%')
      *
      * @param mine The target mine.
